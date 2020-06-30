@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Globalization;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Web.Mvc;
-using System.Web.Security;
 using Compare = System.ComponentModel.DataAnnotations.CompareAttribute;
 
 namespace Mvc3ToolsUpdateWeb_Default.Models
