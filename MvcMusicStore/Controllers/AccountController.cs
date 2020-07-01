@@ -1,6 +1,9 @@
-﻿using Mvc3ToolsUpdateWeb_Default.Models;
+﻿using Microsoft.AspNet.Identity;
+using Mvc3ToolsUpdateWeb_Default.Models;
 using MvcMusicStore.Models;
 using System;
+using System.Threading.Tasks;
+using System.Web;
 using System.Web.Mvc;
 using System.Web.Security;
 
@@ -8,6 +11,30 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 {
     public class AccountController : Controller
     {
+
+        private UserManager _userManager;
+
+        public AccountController()
+        {
+        }
+
+        public AccountController(UserManager userManager)
+        {
+            _userManager = userManager;
+        }
+
+        public UserManager UserManager
+        {
+            get
+            {
+                return _userManager ?? new UserManager();
+            }
+            private set
+            {
+                _userManager = value;
+            }
+        }
+
 
         private void MigrateShoppingCart(string UserName)
         {
@@ -30,11 +57,13 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         // POST: /Account/LogOn
 
         [HttpPost]
-        public ActionResult LogOn(LogOnModel model, string returnUrl)
+        public async Task<ActionResult> LogOn(LogOnModel model, string returnUrl)
         {
             if (ModelState.IsValid)
             {
-                if (Membership.ValidateUser(model.UserName, model.Password))
+                var user = await UserManager.FindAsync(model.UserName, model.Password);
+                //if (Membership.ValidateUser(model.UserName, model.Password))
+                if(user != null)
                 {
                     MigrateShoppingCart(model.UserName);
 
@@ -81,15 +110,18 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         // POST: /Account/Register
 
         [HttpPost]
-        public ActionResult Register(RegisterModel model)
+        public async Task<ActionResult> Register(RegisterModel model)
         {
             if (ModelState.IsValid)
             {
                 // Attempt to register the user
-                MembershipCreateStatus createStatus;
-                Membership.CreateUser(model.UserName, model.Password, model.Email, "question", "answer", true, null, out createStatus);
+                //MembershipCreateStatus createStatus;
+                //Membership.CreateUser(model.UserName, model.Password, model.Email, "question", "answer", true, null, out createStatus);
 
-                if (createStatus == MembershipCreateStatus.Success)
+                var user = new User() { UserName = model.UserName, Email = model.Email, PasswordQuestion = "question", PasswordAnswer = "awnser", IsApproved = true };
+                IdentityResult result = await UserManager.CreateAsync(user, model.Password);
+
+                if (result.Succeeded)
                 {
                     MigrateShoppingCart(model.UserName);
 
@@ -98,7 +130,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                 }
                 else
                 {
-                    ModelState.AddModelError("", ErrorCodeToString(createStatus));
+                    AddErrors(result);
+                    //ModelState.AddModelError("", ErrorCodeToString(result.Errors));
                 }
             }
 
@@ -120,7 +153,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 
         [Authorize]
         [HttpPost]
-        public ActionResult ChangePassword(ChangePasswordModel model)
+        public async Task<ActionResult> ChangePassword(ChangePasswordModel model)
         {
             if (ModelState.IsValid)
             {
@@ -128,10 +161,15 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                 // ChangePassword will throw an exception rather
                 // than return false in certain failure scenarios.
                 bool changePasswordSucceeded;
+                IdentityResult result = null;
                 try
                 {
-                    MembershipUser currentUser = Membership.GetUser(User.Identity.Name, true /* userIsOnline */);
-                    changePasswordSucceeded = currentUser.ChangePassword(model.OldPassword, model.NewPassword);
+                    //MembershipUser currentUser = Membership.GetUser(User.Identity.Name, true /* userIsOnline */);
+                    var user = await UserManager.FindByNameAsync(User.Identity.Name);
+
+                    //changePasswordSucceeded = user.ChangePassword(model.OldPassword, model.NewPassword);
+                    result = await UserManager.ChangePasswordAsync(user.Id, model.OldPassword, model.NewPassword);
+                    changePasswordSucceeded = result.Succeeded;
                 }
                 catch (Exception)
                 {
@@ -159,6 +197,15 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         {
             return View();
         }
+
+        private void AddErrors(IdentityResult result)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError("", error);
+            }
+        }
+
 
         #region Status Codes
         private static string ErrorCodeToString(MembershipCreateStatus createStatus)
