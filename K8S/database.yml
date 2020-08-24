@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database
+spec:
+  selector:
+    matchLabels:
+      app: database  # selector for pods.
+  replicas: 1
+  template:
+    metadata: # template for pod.
+      labels:
+        app: database
+    spec:
+      containers:
+      - name: database
+        ports:
+        - containerPort: 1433
+        image: mcr.microsoft.com/mssql/server
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: SA_PASSWORD
+          value: "P@ssword1"
+        - name: ACCEPT_EULA
+          value: "Y"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: musicstore-database
+
+spec:
+  # This defines which pods are going to be represented by this Service
+  # The service becomes a network endpoint for either other services
+  # or maybe external users to connect to (eg browser)
+  selector:
+    app: database
+  
+  ports:
+  - name: sqlserver
+    port: 1433
+    targetPort: 1433
+
+  type: ClusterIP
