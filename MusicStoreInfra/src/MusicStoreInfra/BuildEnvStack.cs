@@ -5,7 +5,7 @@ namespace MusicStoreInfra
 {
     public class BuildEnvStack : Stack
     {
-        internal static string ecrRepoUrlOutputExportName = "Music-Store-Windows-ECR-Repo-Name";
+        internal static string ecrRepoNameOutputExportName = "Music-Store-Windows-ECR-Repo-Name";
 
         public BuildEnvStack(Construct scope, string id = "Music-Store-Windows-Build-Env-Stack", IStackProps props = null) : base(scope, id, props)
         {
@@ -15,7 +15,7 @@ namespace MusicStoreInfra
             });
 
             new CfnOutput(this, "Ecr-Repo-Name", new CfnOutputProps {
-                ExportName = ecrRepoUrlOutputExportName,
+                ExportName = ecrRepoNameOutputExportName,
                 Value = ecrRepo.RepositoryName
             });
         }

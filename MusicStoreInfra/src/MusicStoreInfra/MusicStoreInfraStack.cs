@@ -83,6 +83,7 @@ namespace MusicStoreInfra
                 Vpc = vpc
             });
             sg.AddIngressRule(Peer.AnyIpv4(), Port.Tcp(80));
+            sg.AddIngressRule(Peer.AnyIpv4(), Port.Tcp(8080));
 
             autoScalingGroup.AddSecurityGroup(sg);
 
@@ -94,8 +95,8 @@ namespace MusicStoreInfra
                 
             });
 
-            //string ecrUrl = Fn.ImportValue(BuildEnvStack.ecrRepoUrlOutputExportName);
-            var ecrRepo = Repository.FromRepositoryName(this, "ExistingEcrRepository", "music-store-windows");
+            string ecrName = Fn.ImportValue(BuildEnvStack.ecrRepoNameOutputExportName);
+            var ecrRepo = Repository.FromRepositoryName(this, "ExistingEcrRepository", ecrName);
 
             var container = taskDef.AddContainer("ContainerDef", new ContainerDefinitionOptions
             {
@@ -121,41 +122,7 @@ namespace MusicStoreInfra
             {
                 Cluster = ecsCluster,
                 TaskDefinition = taskDef,
-                //SecurityGroup
             });
-
-            //var ecsService = new ApplicationLoadBalancedEc2Service(this, "ECS-Service", new ApplicationLoadBalancedEc2ServiceProps
-            //{
-            //    Cluster = ecsCluster,
-            //    PublicLoadBalancer = true,
-            //    MemoryLimitMiB = 2 * 1024,
-
-            //    TaskImageOptions = new ApplicationLoadBalancedTaskImageOptions
-            //    {
-            //        Image = ContainerImage.FromRegistry(Fn.ImportValue(BuildEnvStack.ecrRepoUrlOutputExportName) + ":latest"),
-            //        Environment = new Dictionary<string, string>()
-            //        {
-            //            { "MusicStoreEntities", mainDbConnectionString },
-            //            { "identitydb", identityDbConnectionString }
-            //        }
-            //    },
-
-            //    //TaskDefinition = new Ec2TaskDefinition(this, "TaskDef", new Ec2TaskDefinitionProps
-            //    //{
-            //    //    NetworkMode = NetworkMode.NAT
-            //    //})
-            //});
-
-            //ecsService.TaskDefinition.AddContainer("ContainerDef", new ContainerDefinitionOptions
-            //{
-            //    Essential = true,
-            //    Image = ContainerImage.FromRegistry(Fn.ImportValue(BuildEnvStack.ecrRepoUrlOutputExportName) + ":latest"),
-            //    Environment = new Dictionary<string, string>()
-            //    {
-            //        { "MusicStoreEntities", mainDbConnectionString },
-            //        { "identitydb", identityDbConnectionString }
-            //    }
-            //});
 
             database.Connections.AllowDefaultPortFrom(ecsCluster.Connections.SecurityGroups[0]);
         }
