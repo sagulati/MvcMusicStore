@@ -18,6 +18,11 @@ namespace MusicStoreInfra
                 ExportName = ecrRepoNameOutputExportName,
                 Value = ecrRepo.RepositoryName
             });
+
+            new CfnOutput(this, "Ecr-Repo-URI", new CfnOutputProps
+            {
+                Value = ecrRepo.RepositoryUri
+            });
         }
     }
 }
