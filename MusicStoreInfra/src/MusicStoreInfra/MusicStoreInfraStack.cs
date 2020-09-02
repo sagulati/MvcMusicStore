@@ -52,6 +52,7 @@ namespace MusicStoreInfra
                 }
             );
 
+            // Not secure. TBD: switch to secret CFN Fns joining strings and resolving secret values
             string mainDbConnectionString = FormatConnectionString(database.DbInstanceEndpointAddress, "MusicStore", dbPasswordSecret.SecretValue);
             string identityDbConnectionString = FormatConnectionString(database.DbInstanceEndpointAddress, "Identity", dbPasswordSecret.SecretValue);
 
@@ -106,8 +107,8 @@ namespace MusicStoreInfra
                 Image = ContainerImage.FromEcrRepository(ecrRepo, "latest"),
                 Environment = new Dictionary<string, string>()
                 {
-                    { "MusicStoreEntities", mainDbConnectionString },
-                    { "identitydb", identityDbConnectionString }
+                    { "MusicStoreEntities", mainDbConnectionString }, // TBD: switch to secret CFN Fns joining strings and resolving secret values
+                    { "identitydb", identityDbConnectionString }    // TBD: switch to secret CFN Fns joining strings and resolving secret values
                 }
             });
 
